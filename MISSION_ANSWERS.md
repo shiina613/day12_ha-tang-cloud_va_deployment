@@ -136,60 +136,35 @@ Client → Nginx (port 80) → Agent (port 8000) → Redis (port 6379)
 ```
 (venv) shiina@Shiiina:/media/shiina/Shiina1/Users/quang/Documents/AI20K26/assignments/day12_ha-tang-cloud_va_deployment$ docker compose -f 02-docker/production/docker-compose.yml up nginx agent redis
 WARN[0000] /media/shiina/Shiina1/Users/quang/Documents/AI20K26/assignments/day12_ha-tang-cloud_va_deployment/02-docker/production/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
-[+] Building 0.6s (19/19) FINISHED                                     
- => [internal] load local bake definitions                        0.0s
- => => reading from stdin 696B                                    0.0s
- => [internal] load build definition from Dockerfile              0.0s
- => => transferring dockerfile: 3.29kB                            0.0s
- => [internal] load metadata for docker.io/library/python:3.11-s  0.3s
- => [internal] load .dockerignore                                 0.0s
- => => transferring context: 2B                                   0.0s
- => [internal] load build context                                 0.0s
- => => transferring context: 2.59kB                               0.0s
- => [builder 1/5] FROM docker.io/library/python:3.11-slim@sha256  0.0s
- => => resolve docker.io/library/python:3.11-slim@sha256:233de06  0.0s
- => CACHED [runtime 2/8] RUN groupadd -r appuser && useradd -r -  0.0s
- => CACHED [runtime 3/8] WORKDIR /app                             0.0s
- => CACHED [builder 2/5] WORKDIR /app                             0.0s
- => CACHED [builder 3/5] RUN apt-get update && apt-get install -  0.0s
- => CACHED [builder 4/5] COPY 02-docker/production/requirements.  0.0s
- => CACHED [builder 5/5] RUN pip install --no-cache-dir --user -  0.0s
- => CACHED [runtime 4/8] COPY --from=builder /root/.local /home/  0.0s
- => CACHED [runtime 5/8] COPY 02-docker/production/main.py .      0.0s
- => CACHED [runtime 6/8] RUN mkdir -p /app/utils                  0.0s
- => CACHED [runtime 7/8] COPY utils/mock_llm.py /app/utils/mock_  0.0s
- => CACHED [runtime 8/8] RUN chown -R appuser:appuser /app        0.0s
- => exporting to image                                            0.1s
- => => exporting layers                                           0.0s
- => => exporting manifest sha256:d0073b35e4c53f78ffe22f3c16758d8  0.0s
- => => exporting config sha256:1ba0f8d7d4fdec169737049f10672d9d3  0.0s
- => => exporting attestation manifest sha256:8ce0d07ac8f3d58b193  0.0s
- => => exporting manifest list sha256:e0700782fc1d9da567f3fe4ffe  0.0s
- => => naming to docker.io/library/production-agent:latest        0.0s
- => => unpacking to docker.io/library/production-agent:latest     0.0s
- => resolving provenance for metadata file                        0.0s
-[+] up 8/8
- ✔ Image production-agent        Built                             0.7s
- ✔ Network production_internal   Created                           0.0s
- ✔ Volume production_qdrant_data Created                           0.0s
- ✔ Volume production_redis_data  Created                           0.0s
- ✔ Container production-redis-1  Created                           0.1s
- ✔ Container production-qdrant-1 Created                           0.0s
- ✔ Container production-agent-1  Created                           0.0s
- ✔ Container production-nginx-1  Created                           0.1s
+[+] up 1/1
+ ✔ Container production-redis-1 Running                            0.0s
 Attaching to agent-1, nginx-1, redis-1
-Container production-qdrant-1 Waiting 
 Container production-redis-1 Waiting 
-redis-1  | 1:C 17 Apr 2026 09:31:28.337 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
-redis-1  | 1:C 17 Apr 2026 09:31:28.337 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
-redis-1  | 1:C 17 Apr 2026 09:31:28.337 * Redis version=7.4.8, bits=64, commit=00000000, modified=0, pid=1, just started
-redis-1  | 1:C 17 Apr 2026 09:31:28.337 * Configuration loaded
-redis-1  | 1:M 17 Apr 2026 09:31:28.338 * Increased maximum number of open files to 10032 (it was originally set to 1024).
-redis-1  | 1:M 17 Apr 2026 09:31:28.338 * monotonic clock: POSIX clock_gettime
-redis-1  | 1:M 17 Apr 2026 09:31:28.339 * Running mode=standalone, port=6379.
-redis-1  | 1:M 17 Apr 2026 09:31:28.339 * Server initialized
-redis-1  | 1:M 17 Apr 2026 09:31:28.339 * Ready to accept connections tcp
 Container production-redis-1 Healthy 
+nginx-1  | /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+nginx-1  | /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+nginx-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+nginx-1  | 10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
+nginx-1  | 10-listen-on-ipv6-by-default.sh: info: Enabled listen on IPv6 in /etc/nginx/conf.d/default.conf
+nginx-1  | /docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
+nginx-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+nginx-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+nginx-1  | /docker-entrypoint.sh: Configuration complete; ready for start up
+agent-1  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+agent-1  | INFO:     Started parent process [1]
+agent-1  | INFO:     Started server process [9]
+agent-1  | INFO:     Waiting for application startup.
+agent-1  | INFO:     Started server process [8]
+agent-1  | INFO:     Waiting for application startup.
+agent-1  | {"time":"2026-04-17 09:33:12,977","level":"INFO","msg":"Starting agent..."}
+agent-1  | {"time":"2026-04-17 09:33:12,977","level":"INFO","msg":"Starting agent..."}
+agent-1  | {"time":"2026-04-17 09:33:13,078","level":"INFO","msg":"Agent ready"}
+agent-1  | {"time":"2026-04-17 09:33:13,078","level":"INFO","msg":"Agent ready"}
+agent-1  | INFO:     Application startup complete.
+agent-1  | INFO:     Application startup complete.
+agent-1  | INFO:     127.0.0.1:35756 - "GET /health HTTP/1.1" 200 OK
+agent-1  | INFO:     172.18.0.5:59390 - "GET /health HTTP/1.1" 200 OK
+
 ```
 
 **Test output:**
@@ -205,12 +180,13 @@ shiina@Shiiina:/media/shiina/Shiina1/Documents and Settings/quang/Documents/AI20
 
 ### Exercise 3.1: Railway deployment
 
-- **URL:** https://[your-app].railway.app
+- **URL:** https://day12-ha-tang-cloud-va-deployment-7j8u.onrender.com
 - **Screenshot:** [screenshots/dashboard.png](screenshots/dashboard.png)
 
 **Test output:**
 ```
-[Paste output của curl https://your-app.railway.app/health ở đây]
+shiina@Shiiina:/media/shiina/Shiina1/Documents and Settings/quang/Documents/AI20K26/assignments/day12_ha-tang-cloud_va_deployment$ curl https://day12-ha-tang-cloud-va-deployment-7j8u.onrender.com/health
+{"status":"ok","uptime_seconds":179.1,"platform":"Railway","timestamp":"2026-04-17T09:59:18.423553+00:00"}shiina@Shiiina:/media/shiina/Shiina1/Documents and Settings/quang/Documents/AI20K26/assignments/day12_ha-tang-cloud_va_deployment$ 
 ```
 
 ### Exercise 3.2: Config file comparison
