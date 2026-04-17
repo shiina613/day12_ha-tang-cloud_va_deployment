@@ -1,6 +1,6 @@
 # Day 12 Lab - Mission Answers
 
-> **Student Name:** Nguyen Quang Tung 
+> **Student Name:** Nguyen Quang Tung  
 > **Student ID:** 2A202600197  
 > **Date:** 17/4/2026
 
@@ -8,7 +8,7 @@
 
 ## Part 1: Localhost vs Production
 
-### Exercise 1.1: Anti-patterns found
+### Exercise 1.1: Anti-patterns found in `develop/app.py`
 
 1. API key hardcode trong code: `OPENAI_API_KEY = "sk-hardcoded-fake-key-never-do-this"`
 2. Database URL hardcode với password: `DATABASE_URL = "postgresql://admin:password123@localhost:5432/mydb"`
@@ -18,6 +18,12 @@
 6. `reload=True` và `DEBUG = True` hardcode — không nên dùng trong production
 7. Dùng `print()` thay vì structured logging
 8. Log ra secret: `print(f"[DEBUG] Using key: {OPENAI_API_KEY}")`
+
+### Exercise 1.2: Run basic version — output
+
+```
+[Paste output của curl "http://localhost:8000/ask?question=Hello" -X POST ở đây]
+```
 
 ### Exercise 1.3: Comparison table
 
@@ -32,6 +38,11 @@
 | Shutdown | Đột ngột | Graceful (SIGTERM) | Không mất data, hoàn thành requests đang xử lý |
 | Debug mode | `reload=True` | `reload=False` | Performance tốt hơn, không expose debug info |
 
+**Output production version:**
+```
+[Paste output của curl http://localhost:8000/health ở đây]
+```
+
 ---
 
 ## Part 2: Docker
@@ -43,16 +54,40 @@
 3. **Tại sao COPY requirements.txt trước:** Docker cache layers — nếu requirements không đổi thì không cần rebuild layer `pip install`, chỉ rebuild khi code thay đổi → build nhanh hơn
 4. **CMD vs ENTRYPOINT:** `CMD` là default command, có thể override khi `docker run image <other-cmd>`. `ENTRYPOINT` là command cố định, không thể override
 
+### Exercise 2.2: Build and run basic container — output
+
+```
+[Paste output của docker run + curl test ở đây]
+```
+
 ### Exercise 2.3: Image size comparison
+
+```
+[Paste output của docker images | grep my-agent ở đây]
+```
 
 - Develop: [X] MB
 - Production: [Y] MB
-- Difference: [Z]%
+- Difference: [Z]% smaller
 
-### Exercise 2.4: Architecture diagram
+**Tại sao production nhỏ hơn:**
+Multi-stage build — Stage 1 (builder) cài dependencies, Stage 2 (runtime) chỉ copy kết quả, không chứa build tools. Dùng `slim` base image.
 
+### Exercise 2.4: Docker Compose stack
+
+**Architecture diagram:**
 ```
 Client → Nginx (port 80) → Agent (port 8000) → Redis (port 6379)
+```
+
+**Services được start:**
+```
+[Paste output của docker compose up ở đây — phần services started]
+```
+
+**Test output:**
+```
+[Paste output của curl http://localhost/health ở đây]
 ```
 
 ---
@@ -61,8 +96,13 @@ Client → Nginx (port 80) → Agent (port 8000) → Redis (port 6379)
 
 ### Exercise 3.1: Railway deployment
 
-- **URL:** https://your-app.railway.app
-- **Screenshot:** [Link to screenshot in repo]
+- **URL:** https://[your-app].railway.app
+- **Screenshot:** [screenshots/dashboard.png](screenshots/dashboard.png)
+
+**Test output:**
+```
+[Paste output của curl https://your-app.railway.app/health ở đây]
+```
 
 ### Exercise 3.2: Config file comparison
 
@@ -77,21 +117,35 @@ Client → Nginx (port 80) → Agent (port 8000) → Redis (port 6379)
 
 ## Part 4: API Security
 
-### Exercise 4.1-4.3: Test results
+### Exercise 4.1: API key authentication — test results
 
-**Without API key (401):**
+**Without API key (expected: 401):**
 ```
-[Paste output here]
-```
-
-**With API key (200):**
-```
-[Paste output here]
+[Paste output ở đây]
 ```
 
-**Rate limiting (429 after threshold):**
+**With API key (expected: 200):**
 ```
-[Paste output here]
+[Paste output ở đây]
+```
+
+### Exercise 4.2: JWT authentication — test results
+
+**Get token:**
+```
+[Paste token response ở đây]
+```
+
+**Call API with token (expected: 200):**
+```
+[Paste response ở đây]
+```
+
+### Exercise 4.3: Rate limiting — test results
+
+**After exceeding limit (expected: 429):**
+```
+[Paste output của vòng lặp 20 requests ở đây — đặc biệt phần 429]
 ```
 
 ### Exercise 4.4: Cost guard implementation
@@ -115,55 +169,64 @@ def check_budget(user_id: str, estimated_cost: float) -> bool:
     return True
 ```
 
-Dùng Redis key `budget:{user_id}:{YYYY-MM}` để track spending theo tháng. TTL 32 ngày để tự cleanup.
+**Giải thích:** Dùng Redis key `budget:{user_id}:{YYYY-MM}` để track spending theo tháng. TTL 32 ngày để tự cleanup. Reset tự động đầu tháng vì key mới được tạo.
 
 ---
 
 ## Part 5: Scaling & Reliability
 
-### Exercise 5.1-5.5: Implementation notes
+### Exercise 5.1: Health and readiness checks — output
 
-**Health & readiness checks:**
+**GET /health:**
+```
+[Paste output của curl http://localhost:8000/health ở đây]
+```
+
+**GET /ready:**
+```
+[Paste output của curl http://localhost:8000/ready ở đây]
+```
+
+### Exercise 5.2: Graceful shutdown — log output
+
+```
+[Paste log từ terminal khi gửi kill -TERM ở đây]
+```
+
+### Exercise 5.3: Stateless design — explanation
+
+**Before (stateful — không scale được):**
 ```python
-@app.get("/health")
-def health():
-    return {"status": "ok"}
+conversation_history = {}  # In-memory, mỗi instance có bản riêng
 
-@app.get("/ready")
-def ready():
-    try:
-        r.ping()
-        return {"status": "ready"}
-    except:
-        return JSONResponse(status_code=503, content={"status": "not ready"})
+@app.post("/ask")
+def ask(user_id: str, question: str):
+    history = conversation_history.get(user_id, [])
+    # Instance 1 lưu, Instance 2 không biết → bug khi scale
 ```
 
-**Graceful shutdown:**
+**After (stateless — scale được):**
 ```python
-import signal, sys
-
-def shutdown_handler(signum, frame):
-    print("Graceful shutdown...")
-    sys.exit(0)
-
-signal.signal(signal.SIGTERM, shutdown_handler)
+@app.post("/chat")
+def chat(body: ChatRequest):
+    session = load_session(session_id)   # Đọc từ Redis
+    history = session.get("history", [])
+    # Bất kỳ instance nào cũng đọc được cùng 1 Redis
 ```
 
-**Stateless refactor:**
-```python
-# ❌ Before — state in memory
-conversation_history = {}
+### Exercise 5.4: Load balancing — output
 
-# ✅ After — state in Redis
-history = r.lrange(f"history:{user_id}", 0, -1)
+```
+[Paste output của docker compose up --scale agent=3 ở đây]
 ```
 
-**Load balancing test:**
+**Requests phân tán (served_by khác nhau):**
 ```
-[Paste docker compose up --scale agent=3 output here]
+[Paste output của 10 curl requests ở đây — thấy instance-xxx khác nhau]
 ```
 
-**Stateless test result:**
+### Exercise 5.5: Stateless test — output
+
 ```
-[Paste python test_stateless.py output here]
+[Paste output của python test_stateless.py ở đây]
 ```
