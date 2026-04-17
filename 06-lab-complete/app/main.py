@@ -24,20 +24,32 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 from app.config import settings
 
 # ── LLM ──────────────────────────────────────────────────
-def get_llm_response(messages: list) -> str:
-    if settings.openai_api_key:
-        from openai import OpenAI
-        client = OpenAI(api_key=settings.openai_api_key)
-        resp = client.chat.completions.create(
-            model=settings.llm_model,
-            messages=messages,
-            max_tokens=1000,
-        )
-        return resp.choices[0].message.content
-    else:
-        # fallback mock
+def get_llm_response(messages: list, user_key: str = "") -> tuple[str, bool]:
+    """Returns (reply, used_mock)"""
+    # User chủ động chọn mock
+    if user_key == "__mock__":
         from utils.mock_llm import ask
-        return ask(messages[-1]["content"])
+        return ask(messages[-1]["content"]), True
+
+    key = user_key.strip() or settings.openai_api_key
+    if key:
+        try:
+            from openai import OpenAI
+            client = OpenAI(api_key=key)
+            resp = client.chat.completions.create(
+                model=settings.llm_model,
+                messages=messages,
+                max_tokens=1000,
+            )
+            return resp.choices[0].message.content, False
+        except Exception as e:
+            logger.warning(f"OpenAI failed ({e})")
+            if user_key.strip():
+                raise HTTPException(422, f"API key không hợp lệ: {str(e)}")
+            raise HTTPException(503, "openai_unavailable")
+
+    from utils.mock_llm import ask
+    return ask(messages[-1]["content"]), True
 
 # ── Logging ───────────────────────────────────────────────
 logging.basicConfig(level=logging.INFO)
@@ -124,12 +136,14 @@ async def request_middleware(request: Request, call_next):
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=2000)
     session_id: str = Field(default="default")
+    openai_key: str = Field(default="")  # optional user-provided key
 
 class ChatResponse(BaseModel):
     reply: str
     session_id: str
     model: str
     timestamp: str
+    used_mock: bool = False
 
 # ── Endpoints ─────────────────────────────────────────────
 
@@ -159,7 +173,7 @@ async def chat(body: ChatRequest):
     input_tokens = sum(len(m["content"].split()) * 2 for m in messages)
     record_cost(input_tokens, 0)
 
-    reply = get_llm_response(messages)
+    reply, used_mock = get_llm_response(messages, user_key=body.openai_key)
 
     history.append({"role": "assistant", "content": reply})
     output_tokens = len(reply.split()) * 2
@@ -170,8 +184,9 @@ async def chat(body: ChatRequest):
     return ChatResponse(
         reply=reply,
         session_id=body.session_id,
-        model=settings.llm_model,
+        model=settings.llm_model if not used_mock else "mock",
         timestamp=datetime.now(timezone.utc).isoformat(),
+        used_mock=used_mock,
     )
 
 

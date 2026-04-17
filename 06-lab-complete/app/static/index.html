@@ -192,6 +192,61 @@
 
 <script>
   const SESSION_ID = "session-" + Math.random().toString(36).slice(2, 8);
+  let userOpenAIKey = localStorage.getItem("user_openai_key") || "";
+
+  // Hỏi key ngay khi load nếu chưa có
+  window.addEventListener("load", () => {
+    if (!userOpenAIKey) {
+      showKeyModal((key) => {
+        if (key) {
+          userOpenAIKey = key;
+          localStorage.setItem("user_openai_key", key);
+          addMsg("system", "Đã lưu key. Bắt đầu chat nào!");
+        } else {
+          userOpenAIKey = "__mock__";
+          addMsg("system", "Dùng mock LLM. Gõ tin nhắn để thử.");
+        }
+      });
+    }
+  });
+
+  // ── Modal ──────────────────────────────────────────────
+  function showKeyModal(onConfirm) {
+    const overlay = document.createElement("div");
+    overlay.id = "modal-overlay";
+    overlay.style.cssText = `
+      position:fixed;inset:0;background:rgba(0,0,0,0.7);
+      display:flex;align-items:center;justify-content:center;z-index:999;
+    `;
+    overlay.innerHTML = `
+      <div style="background:#1e1e1e;border:1px solid #333;border-radius:12px;padding:24px;width:360px;">
+        <p style="margin-bottom:12px;font-size:15px;">OpenAI API không khả dụng.<br>Bạn có muốn nhập API key của mình không?</p>
+        <input id="modal-key" type="password" placeholder="sk-..." style="
+          width:100%;padding:10px;background:#0f0f0f;border:1px solid #333;
+          border-radius:8px;color:#e0e0e0;font-size:13px;margin-bottom:12px;
+        "/>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button id="modal-skip" style="padding:8px 16px;background:#333;border:none;border-radius:8px;color:#aaa;cursor:pointer;">
+            Không, dùng mock
+          </button>
+          <button id="modal-confirm" style="padding:8px 16px;background:#2563eb;border:none;border-radius:8px;color:#fff;cursor:pointer;">
+            Xác nhận
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    document.getElementById("modal-confirm").onclick = () => {
+      const key = document.getElementById("modal-key").value.trim();
+      overlay.remove();
+      onConfirm(key);
+    };
+    document.getElementById("modal-skip").onclick = () => {
+      overlay.remove();
+      onConfirm("");
+    };
+  }
 
   function addMsg(role, text) {
     const div = document.createElement("div");
@@ -226,15 +281,33 @@
     try {
       const res = await fetch("/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: msg, session_id: SESSION_ID }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg, session_id: SESSION_ID, openai_key: userOpenAIKey }),
       });
 
       typing.remove();
 
-      if (!res.ok) {
+      if (res.status === 503) {
+        const err = await res.json();
+        if (err.detail === "openai_unavailable") {
+          // Hỏi user có muốn nhập key không
+          showKeyModal((key) => {
+            document.getElementById("send").disabled = false;
+            if (key) {
+              userOpenAIKey = key;
+              localStorage.setItem("user_openai_key", key);
+              addMsg("system", "Đã lưu key. Đang gửi lại...");
+            } else {
+              // User chọn không → dùng mock, gửi lại với flag
+              userOpenAIKey = "__mock__";
+            }
+            input.value = msg;
+            sendMessage();
+          });
+          return;
+        }
+        addMsg("system", "Lỗi 503: " + (err.detail || "Server error"));
+      } else if (!res.ok) {
         const err = await res.json();
         addMsg("system", "Lỗi " + res.status + ": " + (err.detail || "Unknown error"));
       } else {
