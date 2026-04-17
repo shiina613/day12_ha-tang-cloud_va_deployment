@@ -222,5 +222,6 @@ signal.signal(signal.SIGTERM, _handle_signal)
 
 
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host=settings.host, port=settings.port,
+    port = int(os.getenv("PORT", "8000"))
+    uvicorn.run("app.main:app", host=settings.host, port=port,
                 reload=settings.debug, timeout_graceful_shutdown=30)
