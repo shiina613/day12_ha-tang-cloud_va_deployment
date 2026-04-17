@@ -18,19 +18,19 @@ Mở terminal khác:
 ```bash
 curl "http://localhost:8000/ask?question=Hello" -X POST
 ```
-- [ ] Thấy response → chụp màn hình hoặc copy output
+- [x] Thấy response → chụp màn hình hoặc copy output
 
 **Bước 1.2 — Tìm anti-patterns**
 
 Mở file `01-localhost-vs-production/develop/app.py`, tìm và ghi vào `MISSION_ANSWERS.md` mục `Exercise 1.1`:
-- [ ] `OPENAI_API_KEY = "sk-hardcoded..."` → hardcode secret
-- [ ] `DATABASE_URL = "postgresql://admin:password123..."` → hardcode password
-- [ ] Không có `/health` endpoint
-- [ ] `port=8000` cứng, không đọc từ env var
-- [ ] `host="localhost"` → không nhận traffic từ ngoài
-- [ ] `reload=True` và `DEBUG = True` hardcode
-- [ ] Dùng `print()` thay vì logging
-- [ ] `print(f"[DEBUG] Using key: {OPENAI_API_KEY}")` → log ra secret
+- [x] `OPENAI_API_KEY = "sk-hardcoded..."` → hardcode secret
+- [x] `DATABASE_URL = "postgresql://admin:password123..."` → hardcode password
+- [x] Không có `/health` endpoint
+- [x] `port=8000` cứng, không đọc từ env var
+- [x] `host="localhost"` → không nhận traffic từ ngoài
+- [x] `reload=True` và `DEBUG = True` hardcode
+- [x] Dùng `print()` thay vì logging
+- [x] `print(f"[DEBUG] Using key: {OPENAI_API_KEY}")` → log ra secret
 
 **Bước 1.3 — Chạy production version**
 ```bash
@@ -44,11 +44,11 @@ Test:
 curl http://localhost:8000/health
 curl "http://localhost:8000/ask" -X POST -H "Content-Type: application/json" -d '{"question":"Hello"}'
 ```
-- [ ] Thấy response từ production version
+- [x] Thấy response từ production version
 
 **Bước 1.4 — Điền bảng so sánh vào MISSION_ANSWERS.md**
-- [ ] Điền cột "Develop" và "Production" trong bảng Exercise 1.3
-- [ ] Paste output của 2 lần test vào phần Exercise 1.2
+- [x] Điền cột "Develop" và "Production" trong bảng Exercise 1.3
+- [x] Paste output của 2 lần test vào phần Exercise 1.2
 
 ---
 
@@ -57,10 +57,10 @@ curl "http://localhost:8000/ask" -X POST -H "Content-Type: application/json" -d 
 **Bước 2.1 — Trả lời câu hỏi Dockerfile**
 
 Mở `02-docker/develop/Dockerfile`, điền vào `MISSION_ANSWERS.md` mục Exercise 2.1:
-- [ ] Base image: `python:3.11`
-- [ ] Working directory: `/app`
-- [ ] Tại sao copy requirements trước: Docker layer cache
-- [ ] CMD vs ENTRYPOINT: CMD có thể override, ENTRYPOINT thì không
+- [x] Base image: `python:3.11`
+- [x] Working directory: `/app`
+- [x] Tại sao copy requirements trước: Docker layer cache
+- [x] CMD vs ENTRYPOINT: CMD có thể override, ENTRYPOINT thì không
 
 **Bước 2.2 — Build develop image**
 
@@ -79,7 +79,7 @@ Xem image size:
 ```bash
 docker images my-agent:develop
 ```
-- [ ] Ghi image size vào MISSION_ANSWERS.md mục Exercise 2.3
+- [x] Ghi image size vào MISSION_ANSWERS.md mục Exercise 2.3
 
 **Bước 2.3 — Build production image (multi-stage)**
 ```bash
@@ -87,8 +87,8 @@ cd 02-docker/production
 docker build -t my-agent:production .
 docker images | grep my-agent
 ```
-- [ ] So sánh 2 image size, ghi vào MISSION_ANSWERS.md
-- [ ] Giải thích tại sao production nhỏ hơn
+- [x] So sánh 2 image size, ghi vào MISSION_ANSWERS.md
+- [x] Giải thích tại sao production nhỏ hơn
 
 **Bước 2.4 — Chạy Docker Compose**
 ```bash
@@ -126,9 +126,9 @@ Test public URL:
 curl https://YOUR-APP.railway.app/health
 curl "https://YOUR-APP.railway.app/ask?question=Hello" -X POST
 ```
-- [ ] Điền URL vào MISSION_ANSWERS.md mục Exercise 3.1
-- [ ] Chụp màn hình Railway dashboard → lưu vào `screenshots/dashboard.png`
-- [ ] Chụp màn hình kết quả test → lưu vào `screenshots/test.png`
+- [x] Điền URL vào MISSION_ANSWERS.md mục Exercise 3.1
+- [x] Chụp màn hình Railway dashboard → lưu vào `screenshots/dashboard.png`
+- [x] Chụp màn hình kết quả test → lưu vào `screenshots/test.png`
 - [ ] Điền URL vào `DEPLOYMENT.md`
 
 **Bước 3.2 — So sánh config files**
@@ -159,7 +159,7 @@ curl http://localhost:8000/ask -X POST \
   -H "Content-Type: application/json" \
   -d '{"question":"Hello"}'
 ```
-- [ ] Paste cả 2 output vào MISSION_ANSWERS.md mục Exercise 4.1
+- [x] Paste cả 2 output vào MISSION_ANSWERS.md mục Exercise 4.1
 
 **Bước 4.2 — Test JWT**
 ```bash
@@ -181,19 +181,19 @@ curl http://localhost:8000/ask -X POST \
   -H "Content-Type: application/json" \
   -d '{"question":"Explain JWT"}'
 ```
-- [ ] Paste token và response vào MISSION_ANSWERS.md mục Exercise 4.2
+- [x] Paste token và response vào MISSION_ANSWERS.md mục Exercise 4.2
 
 **Bước 4.3 — Test rate limiting**
 ```bash
 for i in {1..20}; do
   curl http://localhost:8000/ask -X POST \
-    -H "Authorization: Bearer $TOKEN" \
+    -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHVkZW50Iiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NzY0MjE0NDksImV4cCI6MTc3NjQyNTA0OX0.oew2hXzo-jwXuDxJMasLECfUHw8Qvg7z60seHYec01Q" \
     -H "Content-Type: application/json" \
     -d "{\"question\":\"Test $i\"}"
   echo ""
 done
 ```
-- [ ] Paste output (đặc biệt phần 429) vào MISSION_ANSWERS.md mục Exercise 4.3
+- [x] Paste output (đặc biệt phần 429) vào MISSION_ANSWERS.md mục Exercise 4.3
 
 **Bước 4.4 — Cost guard**
 - [ ] Đọc `04-api-gateway/production/cost_guard.py` để hiểu logic
@@ -214,7 +214,7 @@ Test:
 curl http://localhost:8000/health
 curl http://localhost:8000/ready
 ```
-- [ ] Paste output vào MISSION_ANSWERS.md mục Exercise 5.1
+- [x] Paste output vào MISSION_ANSWERS.md mục Exercise 5.1
 
 **Bước 5.2 — Graceful shutdown**
 ```bash
@@ -225,14 +225,14 @@ python app.py
 ps aux | grep app.py
 kill -TERM <PID>
 ```
-- [ ] Quan sát log "Graceful shutdown" trong Terminal 1
-- [ ] Paste log vào MISSION_ANSWERS.md mục Exercise 5.2
+- [x] Quan sát log "Graceful shutdown" trong Terminal 1
+- [x] Paste log vào MISSION_ANSWERS.md mục Exercise 5.2
 
 **Bước 5.3 — Stateless design**
 
 Mở `05-scaling-reliability/production/app.py`:
-- [ ] Tìm hàm `save_session()` và `load_session()` — đây là stateless pattern
-- [ ] Giải thích sự khác biệt memory vs Redis trong MISSION_ANSWERS.md
+- [x] Tìm hàm `save_session()` và `load_session()` — đây là stateless pattern
+- [x] Giải thích sự khác biệt memory vs Redis trong MISSION_ANSWERS.md
 
 **Bước 5.4 — Load balancing**
 ```bash

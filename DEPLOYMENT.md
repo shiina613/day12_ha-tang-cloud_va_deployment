@@ -2,54 +2,45 @@
 
 ## Public URL
 
-https://your-agent.railway.app
+https://day12ha-tang-cloudvadeployment-production-bc56.up.railway.app
 
 ## Platform
 
-Railway / Render / Cloud Run
+Railway
 
 ## Test Commands
 
 ### Health Check
 ```bash
-curl https://your-agent.railway.app/health
+curl https://day12ha-tang-cloudvadeployment-production-bc56.up.railway.app/health
 # Expected: {"status": "ok"}
 ```
 
-### Authentication Required
+### Chat (no auth required)
 ```bash
-curl https://your-agent.railway.app/ask -X POST \
+curl -X POST https://day12ha-tang-cloudvadeployment-production-bc56.up.railway.app/chat \
   -H "Content-Type: application/json" \
-  -d '{"user_id": "test", "question": "Hello"}'
-# Expected: 401 Unauthorized
-```
-
-### API Test (with authentication)
-```bash
-curl -X POST https://your-agent.railway.app/ask \
-  -H "X-API-Key: YOUR_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"user_id": "test", "question": "Hello"}'
-# Expected: 200 OK
+  -d '{"message": "Hello", "session_id": "test"}'
+# Expected: 200 OK with reply
 ```
 
 ### Rate Limiting
 ```bash
-for i in {1..15}; do
-  curl -H "X-API-Key: YOUR_KEY" https://your-agent.railway.app/ask \
-    -X POST \
+for i in {1..25}; do
+  curl -s -X POST https://day12ha-tang-cloudvadeployment-production-bc56.up.railway.app/chat \
     -H "Content-Type: application/json" \
-    -d '{"user_id":"test","question":"test"}'
+    -d '{"message":"test","session_id":"ratelimit-test"}'
+  echo ""
 done
 # Expected: eventually returns 429 Too Many Requests
 ```
 
 ## Environment Variables Set
 
-- `PORT`
-- `REDIS_URL`
+- `PORT=8000`
 - `AGENT_API_KEY`
-- `LOG_LEVEL`
+- `ENVIRONMENT`
+- `DAILY_BUDGET_USD`
 
 ## Screenshots
 

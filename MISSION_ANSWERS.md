@@ -206,31 +206,69 @@ shiina@Shiiina:/media/shiina/Shiina1/Documents and Settings/quang/Documents/AI20
 
 **Without API key (expected: 401):**
 ```
-[Paste output ở đây]
+curl http://localhost:8000/ask -X POST \host:8000/ask -X POST \
+     -H "Content-Type: application/json" \
+     -d '{"question": "hello"}'
+{"detail":"Missing API key. Include header: X-API-Key: <your-key>"}
 ```
 
 **With API key (expected: 200):**
 ```
-[Paste output ở đây]
+curlcurl -X POST "http://localhost:8000/ask?question=hello" \
+  -H "X-API-Key: my-secret-key"
+{"question":"hello","answer":"Tôi là AI agent được deploy lên cloud. Câu hỏi của bạn đã được nhận."}
 ```
 
 ### Exercise 4.2: JWT authentication — test results
 
 **Get token:**
 ```
-[Paste token response ở đây]
+shiina@Shiiina:~$ curl -X POST http://localhost:8000/auth/token      -H "Content-Type: application/json"      -d '{"username": "student", "password": "demo123"}'
+{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHVkZW50Iiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NzY0MjE0NDksImV4cCI6MTc3NjQyNTA0OX0.oew2hXzo-jwXuDxJMasLECfUHw8Qvg7z60seHYec01Q","token_type":"bearer","expires_in_minutes":60,"hint":"Include in header: Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."}
 ```
 
 **Call API with token (expected: 200):**
 ```
-[Paste response ở đây]
+shiina@Shiiina:~$ curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHVkZW50Iiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NzY0MjE0NDksImV4cCI6MTc3NjQyNTA0OX0.oew2hXzo-jwXuDxJMasLECfUHw8Qvg7z60seHYec01Q" \
+     http://localhost:8000/ask \
+     -X POST -H "Content-Type: application/json" \
+     -d '{"question": "what is docker?"}'
+{"question":"what is docker?","answer":"Container là cách đóng gói app để chạy ở mọi nơi. Build once, run anywhere!","usage":{"requests_remaining":8,"budget_remaining_usd":5.7e-05}}
 ```
 
 ### Exercise 4.3: Rate limiting — test results
 
 **After exceeding limit (expected: 429):**
 ```
-[Paste output của vòng lặp 20 requests ở đây — đặc biệt phần 429]
+shiina@Shiiina:~$ for i in {1..20}; do
+  curl http://localhost:8000/ask -X POST \
+    -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHVkZW50Iiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NzY0MjE0NDksImV4cCI6MTc3NjQyNTA0OX0.oew2hXzo-jwXuDxJMasLECfUHw8Qvg7z60seHYec01Q" \
+    -H "Content-Type: application/json" \
+    -d "{\"question\":\"Test $i\"}"
+  echo ""
+done
+{"question":"Test 1","answer":"Tôi là AI agent được deploy lên cloud. Câu hỏi của bạn đã được nhận.","usage":{"requests_remaining":9,"budget_remaining_usd":7.5e-05}}
+{"question":"Test 2","answer":"Agent đang hoạt động tốt! (mock response) Hỏi thêm câu hỏi đi nhé.","usage":{"requests_remaining":8,"budget_remaining_usd":9.1e-05}}
+{"question":"Test 3","answer":"Agent đang hoạt động tốt! (mock response) Hỏi thêm câu hỏi đi nhé.","usage":{"requests_remaining":7,"budget_remaining_usd":0.000108}}
+{"question":"Test 4","answer":"Đây là câu trả lời từ AI agent (mock). Trong production, đây sẽ là response từ OpenAI/Anthropic.","usage":{"requests_remaining":6,"budget_remaining_usd":0.000129}}
+{"question":"Test 5","answer":"Tôi là AI agent được deploy lên cloud. Câu hỏi của bạn đã được nhận.","usage":{"requests_remaining":5,"budget_remaining_usd":0.000147}}
+{"question":"Test 6","answer":"Tôi là AI agent được deploy lên cloud. Câu hỏi của bạn đã được nhận.","usage":{"requests_remaining":4,"budget_remaining_usd":0.000166}}
+{"question":"Test 7","answer":"Agent đang hoạt động tốt! (mock response) Hỏi thêm câu hỏi đi nhé.","usage":{"requests_remaining":3,"budget_remaining_usd":0.000182}}
+{"question":"Test 8","answer":"Agent đang hoạt động tốt! (mock response) Hỏi thêm câu hỏi đi nhé.","usage":{"requests_remaining":2,"budget_remaining_usd":0.000198}}
+{"question":"Test 9","answer":"Đây là câu trả lời từ AI agent (mock). Trong production, đây sẽ là response từ OpenAI/Anthropic.","usage":{"requests_remaining":1,"budget_remaining_usd":0.000219}}
+{"question":"Test 10","answer":"Tôi là AI agent được deploy lên cloud. Câu hỏi của bạn đã được nhận.","usage":{"requests_remaining":0,"budget_remaining_usd":0.000238}}
+{"detail":{"error":"Rate limit exceeded","limit":10,"window_seconds":60,"retry_after_seconds":59}}
+{"detail":{"error":"Rate limit exceeded","limit":10,"window_seconds":60,"retry_after_seconds":59}}
+{"detail":{"error":"Rate limit exceeded","limit":10,"window_seconds":60,"retry_after_seconds":59}}
+{"detail":{"error":"Rate limit exceeded","limit":10,"window_seconds":60,"retry_after_seconds":59}}
+{"detail":{"error":"Rate limit exceeded","limit":10,"window_seconds":60,"retry_after_seconds":59}}
+{"detail":{"error":"Rate limit exceeded","limit":10,"window_seconds":60,"retry_after_seconds":59}}
+{"detail":{"error":"Rate limit exceeded","limit":10,"window_seconds":60,"retry_after_seconds":59}}
+{"detail":{"error":"Rate limit exceeded","limit":10,"window_seconds":60,"retry_after_seconds":59}}
+{"detail":{"error":"Rate limit exceeded","limit":10,"window_seconds":60,"retry_after_seconds":59}}
+{"detail":{"error":"Rate limit exceeded","limit":10,"window_seconds":60,"retry_after_seconds":59}}
+shiina@Shiiina:~$ 
+
 ```
 
 ### Exercise 4.4: Cost guard implementation
@@ -264,20 +302,51 @@ def check_budget(user_id: str, estimated_cost: float) -> bool:
 
 **GET /health:**
 ```
-[Paste output của curl http://localhost:8000/health ở đây]
+shiina@Shiiina:~$ curl http://localhost:8000/health
+{"status":"ok","uptime_seconds":58.4,"version":"1.0.0","environment":"development","timestamp":"2026-04-17T10:30:53.877973+00:00","checks":{"memory":{"status":"ok","used_percent":49.5}}}
 ```
 
 **GET /ready:**
 ```
-[Paste output của curl http://localhost:8000/ready ở đây]
+shiina@Shiiina:~$ curl http://localhost:8000/ready
+{"ready":true,"in_flight_requests":1}
 ```
 
 ### Exercise 5.2: Graceful shutdown — log output
 
 ```
-[Paste log từ terminal khi gửi kill -TERM ở đây]
+shiina@Shiiina:~$ ps aux | grep app.py
+shiina     68427  0.4  0.3 249252 54692 pts/0    Sl+  17:29   0:00 python app.py
+shiina     69083  0.0  0.0  17952  2336 pts/2    S+   17:32   0:00 grep --color=auto app.py
+shiina@Shiiina:~$ kill -TERM 68427
+shiina@Shiiina:~$ 
+
 ```
 
+```
+(venv) shiina@Shiiina:/media/shiina/Shiina1/Users/quang/Documents/AI20K26/assignments/day12_ha-tang-cloud_va_deployment/05-scaling-reliability/develop$ python app.py
+2026-04-17 17:29:55,492 INFO Starting agent on port 8000
+INFO:     Started server process [68427]
+INFO:     Waiting for application startup.
+2026-04-17 17:29:55,510 INFO Agent starting up...
+2026-04-17 17:29:55,510 INFO Loading model and checking dependencies...
+2026-04-17 17:29:55,710 INFO ✅ Agent is ready!
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:37570 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37580 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50728 - "GET /ready HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37706 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60228 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33976 - "GET /ready HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-17 17:32:30,542 INFO 🔄 Graceful shutdown initiated...
+2026-04-17 17:32:30,542 INFO ✅ Shutdown complete
+INFO:     Application shutdown complete.
+INFO:     Finished server process [68427]
+2026-04-17 17:32:30,543 INFO Received signal 15 — uvicorn will handle graceful shutdown
+```
 ### Exercise 5.3: Stateless design — explanation
 
 **Before (stateful — không scale được):**
@@ -302,16 +371,136 @@ def chat(body: ChatRequest):
 ### Exercise 5.4: Load balancing — output
 
 ```
-[Paste output của docker compose up --scale agent=3 ở đây]
+(venv) shiina@Shiiina:/media/shiina/Shiina1/Users/quang/Documents/AI20K26/assignments/day12_ha-tang-cloud_va_deployment/05-scaling-reliability/production$ sudo docker compose up --scale agent=3
+WARN[0000] /media/shiina/Shiina1/Users/quang/Documents/AI20K26/assignments/day12_ha-tang-cloud_va_deployment/05-scaling-reliability/production/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+WARN[0000] Found orphan containers ([production-qdrant-1]) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up. 
+[+] up 5/5
+ ✔ Container production-redis-1 Running                            0.0s
+ ✔ Container production-agent-1 Running                            0.0s
+ ✔ Container production-agent-2 Running                            0.0s
+ ✔ Container production-agent-3 Running                            0.0s
+ ✔ Container production-nginx-1 Running                            0.0s
+Attaching to agent-1, agent-2, agent-3, nginx-1, redis-1
+Container production-redis-1 Waiting 
+Container production-redis-1 Healthy 
+agent-1  | INFO:     127.0.0.1:32806 - "GET /health HTTP/1.1" 200 OK
+agent-2  | INFO:     127.0.0.1:32810 - "GET /health HTTP/1.1" 200 OK
+agent-3  | INFO:     127.0.0.1:32812 - "GET /health HTTP/1.1" 200 OK
+agent-1  | INFO:     127.0.0.1:36456 - "GET /health HTTP/1.1" 200 OK
+agent-2  | INFO:     127.0.0.1:36468 - "GET /health HTTP/1.1" 200 OK
+agent-3  | INFO:     127.0.0.1:36482 - "GET /health HTTP/1.1" 200 OK
+agent-1  | INFO:     127.0.0.1:59732 - "GET /health HTTP/1.1" 200 OK
+agent-2  | INFO:     127.0.0.1:59738 - "GET /health HTTP/1.1" 200 OK
+agent-3  | INFO:     127.0.0.1:59740 - "GET /health HTTP/1.1" 200 OK
+agent-1  | INFO:     127.0.0.1:43554 - "GET /health HTTP/1.1" 200 OK
+agent-2  | INFO:     127.0.0.1:43560 - "GET /health HTTP/1.1" 200 OK
+agent-3  | INFO:     127.0.0.1:43566 - "GET /health HTTP/1.1" 200 OK
+agent-1  | INFO:     127.0.0.1:49680 - "GET /health HTTP/1.1" 200 OK
+agent-2  | INFO:     127.0.0.1:49684 - "GET /health HTTP/1.1" 200 OK
+agent-3  | INFO:     127.0.0.1:49698 - "GET /health HTTP/1.1" 200 OK
+agent-1  | INFO:     127.0.0.1:52114 - "GET /health HTTP/1.1" 200 OK
+agent-2  | INFO:     127.0.0.1:52124 - "GET /health HTTP/1.1" 200 OK
+agent-3  | INFO:     127.0.0.1:52126 - "GET /health HTTP/1.1" 200 OK
+agent-1  | INFO:     127.0.0.1:42964 - "GET /health HTTP/1.1" 200 OK
+agent-2  | INFO:     127.0.0.1:42980 - "GET /health HTTP/1.1" 200 OK
+agent-3  | INFO:     127.0.0.1:42984 - "GET /health HTTP/1.1" 200 OK
+agent-1  | INFO:     127.0.0.1:56650 - "GET /health HTTP/1.1" 200 OK
+agent-2  | INFO:     127.0.0.1:56656 - "GET /health HTTP/1.1" 200 OK
+agent-3  | INFO:     127.0.0.1:56666 - "GET /health HTTP/1.1" 200 OK
+agent-1  | INFO:     127.0.0.1:34476 - "GET /health HTTP/1.1" 200 OK
+agent-2  | INFO:     127.0.0.1:34480 - "GET /health HTTP/1.1" 200 OK
+agent-3  | INFO:     127.0.0.1:34484 - "GET /health HTTP/1.1" 200 OK
+agent-3  | INFO:     172.19.0.6:49818 - "GET /health HTTP/1.1" 200 OK
+agent-1  | INFO:     172.19.0.6:51640 - "GET /health HTTP/1.1" 200 OK
+agent-2  | INFO:     172.19.0.6:43806 - "GET /health HTTP/1.1" 200 OK
+agent-3  | INFO:     172.19.0.6:49824 - "GET /health HTTP/1.1" 200 OK
+agent-1  | INFO:     172.19.0.6:51640 - "GET /health HTTP/1.1" 200 OK
+agent-2  | INFO:     172.19.0.6:43806 - "GET /health HTTP/1.1" 200 OK
+agent-3  | INFO:     172.19.0.6:49824 - "GET /health HTTP/1.1" 200 OK
+agent-1  | INFO:     172.19.0.6:51640 - "GET /health HTTP/1.1" 200 OK
+agent-2  | INFO:     172.19.0.6:43806 - "GET /health HTTP/1.1" 200 OK
+agent-3  | INFO:     172.19.0.6:49824 - "GET /health HTTP/1.1" 200 OK
+agent-1  | INFO:     172.19.0.6:51640 - "GET /health HTTP/1.1" 200 OK
+agent-1  | INFO:     127.0.0.1:33774 - "GET /health HTTP/1.1" 200 OK
+agent-2  | INFO:     127.0.0.1:33786 - "GET /health HTTP/1.1" 200 OK
+agent-3  | INFO:     127.0.0.1:33792 - "GET /health HTTP/1.1" 200 OK
+agent-1  | INFO:     127.0.0.1:40222 - "GET /health HTTP/1.1" 200 OK
+agent-2  | INFO:     127.0.0.1:40238 - "GET /health HTTP/1.1" 200 OK
+agent-3  | INFO:     127.0.0.1:40250 - "GET /health HTTP/1.1" 200 OK
+agent-1  | INFO:     127.0.0.1:47542 - "GET /health HTTP/1.1" 200 OK
+agent-2  | INFO:     127.0.0.1:47554 - "GET /health HTTP/1.1" 200 OK
+agent-3  | INFO:     127.0.0.1:47558 - "GET /health HTTP/1.1" 200 OK
+
 ```
 
 **Requests phân tán (served_by khác nhau):**
 ```
-[Paste output của 10 curl requests ở đây — thấy instance-xxx khác nhau]
+shiina@Shiiina:~$ for i in {1..10}; do
+  curl -s http://localhost:8080/health
+  echo ""
+done
+{"status":"ok","uptime_seconds":200.6,"version":"2.0.0","timestamp":"2026-04-17T10:39:48.299600"}
+{"status":"ok","uptime_seconds":201.1,"version":"2.0.0","timestamp":"2026-04-17T10:39:48.315601"}
+{"status":"ok","uptime_seconds":201.2,"version":"2.0.0","timestamp":"2026-04-17T10:39:48.324774"}
+{"status":"ok","uptime_seconds":200.6,"version":"2.0.0","timestamp":"2026-04-17T10:39:48.340030"}
+{"status":"ok","uptime_seconds":201.1,"version":"2.0.0","timestamp":"2026-04-17T10:39:48.348565"}
+{"status":"ok","uptime_seconds":201.2,"version":"2.0.0","timestamp":"2026-04-17T10:39:48.356216"}
+{"status":"ok","uptime_seconds":200.6,"version":"2.0.0","timestamp":"2026-04-17T10:39:48.364475"}
+{"status":"ok","uptime_seconds":201.1,"version":"2.0.0","timestamp":"2026-04-17T10:39:48.373053"}
+{"status":"ok","uptime_seconds":201.2,"version":"2.0.0","timestamp":"2026-04-17T10:39:48.386943"}
+{"status":"ok","uptime_seconds":200.7,"version":"2.0.0","timestamp":"2026-04-17T10:39:48.398700"}
+shiina@Shiiina:~$ 
+
 ```
 
 ### Exercise 5.5: Stateless test — output
 
 ```
-[Paste output của python test_stateless.py ở đây]
+shiina@Shiiina:/media/shiina/Shiina1/Documents and Settings/quang/Documents/AI20K26/assignments/day12_ha-tang-cloud_va_deployment/05-scaling-reliability/production$ python3 test_stateless.py 
+============================================================
+Stateless Scaling Demo
+============================================================
+
+Session ID: 88f6d181-04e2-4bb9-b411-7853518d0a99
+
+Request 1: [instance-dfeb45]
+  Q: What is Docker?
+  A: Container là cách đóng gói app để chạy ở mọi nơi. Build once, run anywhere!...
+
+Request 2: [instance-05fd78]
+  Q: Why do we need containers?
+  A: Tôi là AI agent được deploy lên cloud. Câu hỏi của bạn đã được nhận....
+
+Request 3: [instance-43d2ed]
+  Q: What is Kubernetes?
+  A: Tôi là AI agent được deploy lên cloud. Câu hỏi của bạn đã được nhận....
+
+Request 4: [instance-dfeb45]
+  Q: How does load balancing work?
+  A: Agent đang hoạt động tốt! (mock response) Hỏi thêm câu hỏi đi nhé....
+
+Request 5: [instance-05fd78]
+  Q: What is Redis used for?
+  A: Đây là câu trả lời từ AI agent (mock). Trong production, đây sẽ là response từ O...
+
+------------------------------------------------------------
+Total requests: 5
+Instances used: {'instance-dfeb45', 'instance-05fd78', 'instance-43d2ed'}
+✅ All requests served despite different instances!
+
+--- Conversation History ---
+Total messages: 10
+  [user]: What is Docker?...
+  [assistant]: Container là cách đóng gói app để chạy ở mọi nơi. Build once...
+  [user]: Why do we need containers?...
+  [assistant]: Tôi là AI agent được deploy lên cloud. Câu hỏi của bạn đã đư...
+  [user]: What is Kubernetes?...
+  [assistant]: Tôi là AI agent được deploy lên cloud. Câu hỏi của bạn đã đư...
+  [user]: How does load balancing work?...
+  [assistant]: Agent đang hoạt động tốt! (mock response) Hỏi thêm câu hỏi đ...
+  [user]: What is Redis used for?...
+  [assistant]: Đây là câu trả lời từ AI agent (mock). Trong production, đây...
+
+✅ Session history preserved across all instances via Redis!
+shiina@Shiiina:/media/shiina/Shiina1/Documents and Settings/quang/Documents/AI20K26/assignments/day12_ha-tang-cloud_va_deployment/05-scaling-reliability/production$ 
 ```
